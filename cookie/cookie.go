@@ -5,9 +5,11 @@ import(
 	"net/http"
 	Time "time"
 )
-
+type Response interface {
+	AddCookie(str string, value string)
+}
 type Cookie struct{
-	response http.ResponseWriter
+	response Response
 	request *http.Request
 	cookies map[string]*http.Cookie
 	init bool
@@ -28,22 +30,21 @@ func (c *Cookie) addCookiesToMap() *Cookie{
 	}
 	return c
 }
-func (c *Cookie) Init(response http.ResponseWriter, request *http.Request) *Cookie{
+func (c *Cookie) Init(response Response, request *http.Request) *Cookie{
 	if c.init {
 		return c
 	}
-	c.readonly = false
+	c.cookies = make(map[string]*http.Cookie)
 	c.response = response
 	c.request = request
-	c.addCookiesToMap()
 	return c
 }
 
-func (c *Cookie) Add(cookie http.Cookie) *Cookie{
+func (c *Cookie) Add(cookie *http.Cookie) *Cookie{
 	if c.readonly {
 		return c
 	}
-	c.cookies[cookie.Name] = &cookie
+	c.cookies[cookie.Name] = cookie
 	return c
 }
 
@@ -65,6 +66,8 @@ func (c *Cookie) Finish(){
 		return
 	}
 	for _, cookie := range c.cookies {
-		http.SetCookie(c.response, cookie)
+		if v := cookie.String(); v != "" {
+			c.response.AddCookie("Set-Cookie", v)
+		}
 	}
 }

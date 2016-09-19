@@ -26,13 +26,17 @@ func (res *Response) Init(rs http.ResponseWriter, r *http.Request, w *bufio.Read
 	res.Header = &header.Header{}
 	res.Header.Init(rs, r, w)
 	res.Cookie = &cookie.Cookie{}
-	res.Cookie.Init(rs, r)
+	res.Cookie.Init(res, r)
 	res.ended = false
 	return res
 }
 
+func (res *Response) AddCookie(key string, value string){
+	res.Header.AppendCookie(key, value)
+}
 func (res *Response) Write(content string) *Response{
 	if res.Header.BasicSent() == false && res.Header.CanSendHeader() == true {
+		res.Cookie.Finish()
 		if sent := res.Header.FlushHeaders(); sent == false {
 			log.Panic("Failed to push headers")
 		}
@@ -52,6 +56,7 @@ func (res *Response) sendContent(status int, content_type string, content []byte
 	}
 	if res.Header.CanSendHeader() == true {
 		res.Header.Set("Content-Type", content_type)
+		res.Cookie.Finish()
 		if sent := res.Header.FlushHeaders(); sent == false {
 			log.Panic("Failed to write headers")
 		}

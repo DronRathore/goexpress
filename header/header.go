@@ -97,7 +97,13 @@ func (h *Header) FlushHeaders() bool{
 		}
 	}
 }
-
+func (h *Header) AppendCookie(key string, value string) {
+	if h.Get(key) != "" {
+		h.Set(key, h.Get(key) + ";" + value)
+	} else {
+		h.Set(key, value)
+	}
+}
 func (h *Header) BasicSent() bool {
 	return h.basicSent
 }
