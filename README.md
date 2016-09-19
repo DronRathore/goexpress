@@ -64,7 +64,7 @@ func main (){
       Expires: Time.Unix(0, 0)
     }
     res.Cookie.Add(cookie)
-    req.Params["session_id"] = req.Cookie.Get("session_id")
+    req.Params["session_id"] = req.Cookies.Get("session_id")
   })
   app.Get("/", func(req *request.Request, res *response.Response, next func()){
     res.Write("Hello World")
