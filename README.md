@@ -46,6 +46,32 @@ func main (){
   app.Start("8080")
 }
 ```
+## Cookies
+```go
+import (
+  express "./goexpress"
+  request "./goexpress/request"
+  response "./goexpress/response"
+  http "net/http"
+  Time "time"
+)
+func main (){
+  var app = express.Express()
+  app.Use(func(req *request.Request, res *response.Response, next func()){
+    var cookie = &http.Cookie{
+      Name: "name",
+      Value: "value",
+      Expires: Time.Unix(0, 0)
+    }
+    res.Cookie.Add(cookie)
+    req.Params["session_id"] = req.Cookie.Get("session_id")
+  })
+  app.Get("/", func(req *request.Request, res *response.Response, next func()){
+    res.Write("Hello World")
+  })
+  app.Start("8080")
+}
+```
 ## Post Body
 ```go
 func main (){
