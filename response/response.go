@@ -83,7 +83,9 @@ func (res *Response) Redirect(url string) *Response{
 func (res *Response) HasEnded() bool{
 	return res.ended
 }
-
+func (res *Response) Error (status int, str string) {
+	res.sendContent(status, "text/html", []byte(str))
+}
 func (res *Response) JSON(content interface{}){
 	output, err := json.Marshal(content)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/url"
 	"strings"
+	"encoding/json"
 	cookie "../cookie"
 )
 
@@ -35,10 +36,10 @@ type Request struct{
 	Query map[string][]string
 	Body map[string][]string
 	Cookies *cookie.Cookie
+	JSON *json.Decoder
 }
 
 func (req *Request) Init(request *http.Request) *Request{
-	request.ParseForm()
 	req.Header = make(map[string]string)
 	req.Body = make(map[string][]string)
 	req.Body = request.Form
@@ -52,11 +53,17 @@ func (req *Request) Init(request *http.Request) *Request{
 	req._url = request.URL
 	req.fileReader = nil
 	log.Print(request.Method, " ", request.URL.Path)
-	for key, value := range request.PostForm {
-		req.Body[key] = value
-	}
 	for key, value := range request.Header {
 		req.Header[key] = value[0]
+	}
+	
+	if req.Header["Content-Type"] == "application/json" {
+		req.JSON = json.NewDecoder(request.Body)
+	} else {
+		request.ParseForm()
+	}
+	for key, value := range request.PostForm {
+		req.Body[key] = value
 	}
 	return req
 }
