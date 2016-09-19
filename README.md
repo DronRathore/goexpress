@@ -1,5 +1,5 @@
 # goexpress
-An Express JS Style HTTP server implementation in Golang. The package make use of similar naming and property conventions as they are in express-js.
+An Express JS Style HTTP server implementation in Golang. The package make use of similar framework convention as they are in express-js. People switching from NodeJS to Golang often end up in a bad learning curve to start building their webapps, this project is meant to ease things up, its a light weight framework which can be extended to do add any numebr of functionality.
 
 ## Hello World
 ```go
@@ -94,6 +94,9 @@ func main (){
 
 ## File Uploading
 The ```response.Response``` struct has a ```GetFile()``` method, which reads a single file at a time, you can make looped calls to retrieve all the files, however this feature is not thoroughly tested, bugs can be reported for the same.
+
+## Testing
+There are no testing added to this package yet, I am hoping to get my hands dirty in testing, if anyone can help me out with this, feel free to open a PR.
 
 ## Contribution
 - If you want some common **must** have middlewares support, please open an issue, will add them.

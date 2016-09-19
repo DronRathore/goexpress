@@ -33,6 +33,7 @@ type Request struct{
 	URL string
 	_url *url.URL
 	Params map[string]string // a map to be filled by router
+	Locals map[string]interface{}
 	Query map[string][]string
 	Body map[string][]string
 	Cookies *cookie.Cookie
@@ -42,6 +43,7 @@ type Request struct{
 func (req *Request) Init(request *http.Request) *Request{
 	req.Header = make(map[string]string)
 	req.Body = make(map[string][]string)
+	req.Locals = make(map[string]interface{})
 	req.Body = request.Form
 	req.Cookies = &cookie.Cookie{}
 	req.Cookies.InitReadOnly(request)
