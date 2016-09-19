@@ -56,7 +56,7 @@ func (req *Request) Init(request *http.Request) *Request{
 	for key, value := range request.Header {
 		req.Header[key] = value[0]
 	}
-	
+
 	if req.Header["Content-Type"] == "application/json" {
 		req.JSON = json.NewDecoder(request.Body)
 	} else {
@@ -74,6 +74,10 @@ func (req *Request) Init(request *http.Request) *Request{
 // }
 func(req *Request) GetUrl() *url.URL {
 	return req._url
+}
+
+func (req *Request) GetRaw() *http.Request{
+	return req.ref
 }
 
 func (req *Request) GetFile() *File {

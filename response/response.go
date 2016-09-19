@@ -73,6 +73,7 @@ func (res *Response) End(){
 		log.Panic("Couldn't close the connection, already lost?")
 	}
 }
+
 func (res *Response) Redirect(url string) *Response{
 	res.Header.SetStatus(301)
 	res.Header.Set("Location", url)
@@ -80,12 +81,27 @@ func (res *Response) Redirect(url string) *Response{
 	res.End()
 	return res
 }
+
 func (res *Response) HasEnded() bool{
 	return res.ended
 }
+
+func (res *Response) GetRaw () http.ResponseWriter{
+	return res.response
+}
+
+func (res *Response) GetConnection () net.Conn {
+	return res.connection
+}
+
+func (res *Response) GetBuffer () *bufio.ReadWriter {
+	return res.writer
+}
+
 func (res *Response) Error (status int, str string) {
 	res.sendContent(status, "text/html", []byte(str))
 }
+
 func (res *Response) JSON(content interface{}){
 	output, err := json.Marshal(content)
 	if err != nil {
