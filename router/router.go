@@ -1,3 +1,8 @@
+// Package Router, returns instance for express Router
+// Functions defined here are extended by express.go itself
+// 
+// Express Router takes the url regex as similar to the js one
+// Router.Get("/:param") will return the param in Response.Params["param"]
 package router
 
 import (

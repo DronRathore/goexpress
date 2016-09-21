@@ -1,4 +1,6 @@
-// Cookies
+// Header Package, handles the Response & Request Header
+// The package is responsible for setting Response headers
+// and pushing the same on the transport buffer
 package header
 import (
 	"net/http"

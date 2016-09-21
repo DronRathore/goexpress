@@ -1,3 +1,13 @@
+// Package goexpress provides the actual hook that 
+// enables you to start building your application.
+// 
+// The basic Express() functions returns an instance
+// for the express which can be further be used as
+// an express hook.
+// 
+// app.Use(), app.Get(), app.Post(), app.Delete(), app.Push()
+// app.Put() are the top level functions that can be used in
+// the same fashion as the express-js ones are.
 package goexpress
 import (
 	"log"
@@ -20,7 +30,7 @@ func Express() *express{
 }
 
 // ServeHTTP
-//
+// 
 // Default function to handle HTTP request
 func (e *express) ServeHTTP(res http.ResponseWriter,req *http.Request) {
 	hijack, ok := res.(http.Hijacker)

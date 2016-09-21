@@ -1,4 +1,6 @@
-// Cookies
+// Cookies Package helps reading and setting the cookie
+// The cookie struct's instance is availaible to both
+// goexpress.Request and goexpress.Response
 package cookie
 
 import(

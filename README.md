@@ -1,3 +1,4 @@
+[![GoDoc](https://godoc.org/github.com/DronRathore/goexpress?status.svg)](https://godoc.org/github.com/DronRathore/goexpress)
 # goexpress
 An Express JS Style HTTP server implementation in Golang. The package make use of similar framework convention as they are in express-js. People switching from NodeJS to Golang often end up in a bad learning curve to start building their webapps, this project is meant to ease things up, its a light weight framework which can be extended to do add any numebr of functionality.
 

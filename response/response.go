@@ -1,3 +1,5 @@
+// Response package provides the core functionality of handling
+// the client connection, chunked response and other features
 package response
 import (
 	"net"
@@ -16,6 +18,7 @@ type Response struct{
 	response http.ResponseWriter
 	Header *header.Header
 	Cookie *cookie.Cookie
+	Locals map[string]interface{}
 	writer *bufio.ReadWriter
 	connection net.Conn
 	ended bool
@@ -30,6 +33,7 @@ func (res *Response) Init(rs http.ResponseWriter, r *http.Request, w *bufio.Read
 	res.Header.Init(rs, r, w)
 	res.Cookie = &cookie.Cookie{}
 	res.Cookie.Init(res, r)
+	res.Locals = make(map[string]interface{})
 	res.ended = false
 	return res
 }
