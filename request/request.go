@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"encoding/json"
-	cookie "../cookie"
+	cookie "github.com/DronRathore/goexpress/cookie"
 )
 
 type Url struct{

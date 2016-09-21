@@ -6,8 +6,8 @@ import (
 	"bufio"
 	"fmt"
 	"encoding/json"
-	header "../header"
-	cookie "../cookie"
+	header "github.com/DronRathore/goexpress/header"
+	cookie "github.com/DronRathore/goexpress/cookie"
 )
 
 type Response struct{

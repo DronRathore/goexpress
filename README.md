@@ -5,9 +5,9 @@ An Express JS Style HTTP server implementation in Golang. The package make use o
 ```go
 package main
 import (
-  express "./goexpress"
-  request "./goexpress/request"
-  response "./goexpress/response"
+  express "github.com/DronRathore/goexpress"
+  request "github.com/DronRathore/goexpress/request"
+  response "github.com/DronRathore/goexpress/response"
 )
 
 func main (){
@@ -49,9 +49,9 @@ func main (){
 ## Cookies
 ```go
 import (
-  express "./goexpress"
-  request "./goexpress/request"
-  response "./goexpress/response"
+  express "github.com/DronRathore/goexpress"
+  request "github.com/DronRathore/goexpress/request"
+  response "github.com/DronRathore/goexpress/response"
   http "net/http"
   Time "time"
 )

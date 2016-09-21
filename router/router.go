@@ -2,8 +2,8 @@ package router
 
 import (
 	"regexp"
-	"../request"
-	"../response"
+	"github.com/DronRathore/goexpress/request"
+	"github.com/DronRathore/goexpress/response"
 )
 type NextFunc func(NextFunc)
 type Middleware func(request *request.Request, response *response.Response, next func())

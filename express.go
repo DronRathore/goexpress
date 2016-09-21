@@ -2,9 +2,9 @@ package goexpress
 import (
 	"log"
 	http "net/http"
-	response "./response"
-	request "./request"
-	router "./router"
+	response "github.com/DronRathore/goexpress/response"
+	request "github.com/DronRathore/goexpress/request"
+	router "github.com/DronRathore/goexpress/router"
 )
 
 type express struct {
