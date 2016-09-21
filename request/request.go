@@ -19,12 +19,15 @@ type Url struct{
 	Fragment string
 }
 
+// Contains the reader to read the buffer content of
+// uploading file
 type File struct{
 	Name string
 	FormName string
 	Reader *multipart.Part
 }
 
+// Request Structure
 type Request struct{
 	ref *http.Request
 	fileReader *multipart.Reader
@@ -73,15 +76,18 @@ func (req *Request) Init(request *http.Request) *Request{
 // todo: Parser for Array and interface
 // func (req *Request) parseQuery(){
 // 	req._url.RawQuery
-// }
+
+// Returns the URL structure
 func(req *Request) GetUrl() *url.URL {
 	return req._url
 }
 
+// Helper that returns original raw http.Request object
 func (req *Request) GetRaw() *http.Request{
 	return req.ref
 }
 
+// In case of file upload request, this function returns a file struct to read
 func (req *Request) GetFile() *File {
 	if req.fileReader == nil {
 		reader, err := req.ref.MultipartReader()

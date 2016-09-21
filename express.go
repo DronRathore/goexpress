@@ -11,7 +11,7 @@ type express struct {
 	router *router.Router
 	started bool
 }
-
+// Returns a new instance of express
 func Express() *express{
 	var exp = &express{}
 	exp.router = &router.Router{}
@@ -19,6 +19,9 @@ func Express() *express{
 	return exp
 }
 
+// ServeHTTP
+//
+// Default function to handle HTTP request
 func (e *express) ServeHTTP(res http.ResponseWriter,req *http.Request) {
 	hijack, ok := res.(http.Hijacker)
 	if !ok {
@@ -74,31 +77,37 @@ func (e *express) ServeHTTP(res http.ResponseWriter,req *http.Request) {
 	}
 }
 
+// Extension to provide Router.Get functionalities
 func (e *express) Get(url string, middleware router.Middleware) *express{
 	e.router.Get(url, middleware)
 	return e
 }
 
+// Extension to provide Router.Post functionality
 func (e *express) Post(url string, middleware router.Middleware) *express{
 	e.router.Post(url, middleware)
 	return e
 }
 
+// Extension to provide Router.Put functionality
 func (e *express) Put(url string, middleware router.Middleware) *express{
 	e.router.Put(url, middleware)
 	return e
 }
 
+// Extension to provide Router.Patch functionality
 func (e *express) Patch(url string, middleware router.Middleware) *express{
 	e.router.Patch(url, middleware)
 	return e
 }
 
+// Extension to provide Router.Delete functionality
 func (e *express) Delete(url string, middleware router.Middleware) *express{
 	e.router.Delete(url, middleware)
 	return e
 }
 
+// Extension to provide Router.Use functionality
 func (e *express) Use(middleware router.Middleware) *express{
 	e.router.Use(middleware)
 	return e

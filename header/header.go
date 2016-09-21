@@ -8,6 +8,7 @@ import (
 	"log"
 )
 
+// Header Struct
 type Header struct{
 	response	http.ResponseWriter
 	request		*http.Request
@@ -49,6 +50,7 @@ var statusCodeMap = map[int]string{
 	505: "HTTP Version Not Supported",
 }
 
+// Initialise with response, request and io buffer
 func (h *Header) Init(response http.ResponseWriter, request *http.Request, writer *bufio.ReadWriter) *Header{
 	h.response = response
 	h.request = request
@@ -60,21 +62,30 @@ func (h *Header) Init(response http.ResponseWriter, request *http.Request, write
 	return h
 }
 
+// Sets a header
 func (h *Header) Set(key string, value string) *Header{
 	h.response.Header().Set(key, value)
 	return h
 }
 
+// Returns the header
+func (h *Header) Get(key string) (string) {
+	return h.response.Header().Get(key)
+}
+
+// Deletes a Header
 func (h *Header) Del(key string) *Header{
 	h.response.Header().Del(key)
 	return h
 }
 
+// todo: Add non-chunk response functionality
 func (h *Header) SetLength(length *int){
 	h.response.Header().Set("Content-Length", strconv.Itoa(*length))
 	h.hasLength = true
 }
 
+// Flushes Headers
 func (h *Header) FlushHeaders() bool{
 	if h.bodySent == true {
 		log.Panic("Cannot send headers in middle of body")
@@ -97,6 +108,8 @@ func (h *Header) FlushHeaders() bool{
 		}
 	}
 }
+
+// An internal helper function to set Cookie Header
 func (h *Header) AppendCookie(key string, value string) {
 	if h.Get(key) != "" {
 		h.Set(key, h.Get(key) + ";" + value)
@@ -104,10 +117,13 @@ func (h *Header) AppendCookie(key string, value string) {
 		h.Set(key, value)
 	}
 }
+
+// Returns the state of Headers whether they are sent or not
 func (h *Header) BasicSent() bool {
 	return h.basicSent
 }
 
+// Returns the state of response
 func (h *Header) CanSendHeader() bool {
 	if h.basicSent == true {
 		if h.bodySent == false {
@@ -119,9 +135,11 @@ func (h *Header) CanSendHeader() bool {
 	return true
 }
 
+// Sets the HTTP Status of the Request
 func (h *Header) SetStatus(code int){
 	h.StatusCode = code
 }
+
 func (h *Header) sendBasics(){
 	if h.StatusCode == 0 {
 		h.StatusCode = 200
@@ -130,8 +148,4 @@ func (h *Header) sendBasics(){
 	h.Set("transfer-encoding", "chunked")
 	h.Set("connection", "keep-alive")
 	h.basicSent = true
-}
-
-func (h *Header) Get(key string) (string) {
-	return h.response.Header().Get(key)
 }

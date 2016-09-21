@@ -5,18 +5,22 @@ import (
 	"github.com/DronRathore/goexpress/request"
 	"github.com/DronRathore/goexpress/response"
 )
-type NextFunc func(NextFunc)
+
+// Middleware function singature type
 type Middleware func(request *request.Request, response *response.Response, next func())
 
+// A Route contains a regexp and a Router.Middleware type handler
 type Route struct{
 	regex *regexp.Regexp
 	handler Middleware
 }
 
+// Collection of all method types routers
 type Router struct {
 	routes map[string][]*Route
 }
 
+// Intialise the Router defaults
 func (r *Router) Init(){
 	r.routes = make(map[string][]*Route)
 	r.routes["get"] = []*Route{}
@@ -32,6 +36,8 @@ func (r* Router) addHandler(method string, url *regexp.Regexp, middleware Middle
 	route.handler = middleware
 	r.routes[method] = append(r.routes[method], route)
 }
+
+// Router functions are extended by express itself
 
 func (r* Router) Get(url string, middleware Middleware) *Router{
 	r.addHandler("get", compileRegex(url), middleware)
@@ -60,6 +66,7 @@ func (r* Router) Delete(url string, middleware Middleware) *Router{
 
 func (r* Router) Use(middleware Middleware) *Router{
 	var regex = compileRegex("(.*)")
+	// A middleware is for all type of routes
 	r.addHandler("get", regex, middleware)
 	r.addHandler("post", regex, middleware)
 	r.addHandler("put", regex, middleware)
@@ -67,6 +74,9 @@ func (r* Router) Use(middleware Middleware) *Router{
 	r.addHandler("delete", regex, middleware)
 	return r
 }
+
+// Finds the suitable router for given url and method
+// It returns the middleware if found and a cursor index of array
 func (r* Router) FindNext(index int, method string, url string, request *request.Request) (Middleware, int){
 	var i = index
 	for i < len(r.routes[method]){
@@ -84,6 +94,7 @@ func (r* Router) FindNext(index int, method string, url string, request *request
 	}
 	return nil, -1
 }
+
 
 func compileRegex(url string) *regexp.Regexp {
 	var i = 0

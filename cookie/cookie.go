@@ -5,9 +5,12 @@ import(
 	"net/http"
 	Time "time"
 )
+// An interface to set the cookie in response
 type Response interface {
 	AddCookie(str string, value string)
 }
+
+// Cookie struct
 type Cookie struct{
 	response Response
 	request *http.Request
@@ -15,6 +18,8 @@ type Cookie struct{
 	init bool
 	readonly bool
 }
+
+// Initialise a Cookie struct for use of Request Struct
 func (c *Cookie) InitReadOnly(request *http.Request) *Cookie{
 	c.request = request
 	c.addCookiesToMap()
@@ -30,6 +35,8 @@ func (c *Cookie) addCookiesToMap() *Cookie{
 	}
 	return c
 }
+
+// Initialise the Cookie struct with goexpress.Response and http request
 func (c *Cookie) Init(response Response, request *http.Request) *Cookie{
 	if c.init {
 		return c
@@ -40,6 +47,7 @@ func (c *Cookie) Init(response Response, request *http.Request) *Cookie{
 	return c
 }
 
+// Adds a cookie
 func (c *Cookie) Add(cookie *http.Cookie) *Cookie{
 	if c.readonly {
 		return c
@@ -48,12 +56,14 @@ func (c *Cookie) Add(cookie *http.Cookie) *Cookie{
 	return c
 }
 
+// Deletes a cookie
 func (c *Cookie) Del(name string) *Cookie{
 	var cookie = &http.Cookie{Name: name, Expires: Time.Unix(0, 0)}
 	c.cookies[name] = cookie
 	return c
 }
 
+// Returns a cookie
 func (c *Cookie) Get(name string) string{
 	cookie, found := c.cookies[name]
 	if found == false {
@@ -61,6 +71,8 @@ func (c *Cookie) Get(name string) string{
 	}
 	return cookie.Value
 }
+
+// An internal function to set all the cookies before pushing response body
 func (c *Cookie) Finish(){
 	if c.readonly {
 		return

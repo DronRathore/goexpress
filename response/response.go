@@ -10,6 +10,8 @@ import (
 	cookie "github.com/DronRathore/goexpress/cookie"
 )
 
+// Response Structure extends basic http.ResponseWriter interface
+// It encapsulates Header and Cookie class for direct access
 type Response struct{
 	response http.ResponseWriter
 	Header *header.Header
@@ -18,7 +20,8 @@ type Response struct{
 	connection net.Conn
 	ended bool
 }
-
+// Intialise the Response Struct, requires the Hijacked buffer,
+// connection and Response interface
 func (res *Response) Init(rs http.ResponseWriter, r *http.Request, w *bufio.ReadWriter, con net.Conn) *Response{
 	res.response = rs
 	res.writer = w
@@ -31,9 +34,12 @@ func (res *Response) Init(rs http.ResponseWriter, r *http.Request, w *bufio.Read
 	return res
 }
 
+// This function is for internal Use by Cookie Struct
 func (res *Response) AddCookie(key string, value string){
 	res.Header.AppendCookie(key, value)
 }
+
+// Writes a string content to the buffer and immediately flushes the same
 func (res *Response) Write(content string) *Response{
 	if res.Header.BasicSent() == false && res.Header.CanSendHeader() == true {
 		res.Cookie.Finish()
@@ -69,6 +75,7 @@ func (res *Response) sendContent(status int, content_type string, content []byte
 	res.End()
 }
 
+// Ends a response and drops the connection with client
 func (res *Response) End(){
 	res.writer.WriteString("0\r\n\r\n")
 	res.writer.Flush()
@@ -79,34 +86,42 @@ func (res *Response) End(){
 	}
 }
 
+// Redirects a request, takes the url as the Location
 func (res *Response) Redirect(url string) *Response{
 	res.Header.SetStatus(301)
 	res.Header.Set("Location", url)
 	res.Header.FlushHeaders()
+	res.ended = true
 	res.End()
 	return res
 }
 
+// An internal package use function to check the state of connection
 func (res *Response) HasEnded() bool{
 	return res.ended
 }
 
+// A helper for middlewares to get the original http.ResponseWriter
 func (res *Response) GetRaw () http.ResponseWriter{
 	return res.response
 }
 
+// A helper for middlewares to get the original net.Conn
 func (res *Response) GetConnection () net.Conn {
 	return res.connection
 }
 
+// A helper for middlewares to get the original Request buffer
 func (res *Response) GetBuffer () *bufio.ReadWriter {
 	return res.writer
 }
 
+// Send Error, takes HTTP status and a string content
 func (res *Response) Error (status int, str string) {
 	res.sendContent(status, "text/html", []byte(str))
 }
 
+// Send JSON response, takes interface as input
 func (res *Response) JSON(content interface{}){
 	output, err := json.Marshal(content)
 	if err != nil {
