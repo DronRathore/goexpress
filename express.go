@@ -125,13 +125,13 @@ func (e *express) Use(middleware router.Middleware) *express{
 }
 
 // Sets global app properties that can be accessed under express struct
-func (e *express) Set(key string, value interface{}) *express{
+func (e *express) SetProp(key string, value interface{}) *express{
 	e.properties[key] = value
 	return e
 }
 
 // Return the app property
-func (e *express) Get(key string, value interface{}) *express{
+func (e *express) GetProp(key string, value interface{}) interface{}{
 	return e.properties[key]
 }
 
