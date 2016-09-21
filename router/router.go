@@ -10,7 +10,8 @@ import (
 	"github.com/DronRathore/goexpress/request"
 	"github.com/DronRathore/goexpress/response"
 )
-
+// An extension type to help loop of lookup in express.go
+type NextFunc func(NextFunc)
 // Middleware function singature type
 type Middleware func(request *request.Request, response *response.Response, next func())
 

@@ -20,17 +20,18 @@ import (
 type express struct {
 	router *router.Router
 	started bool
+	properties map[string]interface{}
 }
 // Returns a new instance of express
 func Express() *express{
 	var exp = &express{}
 	exp.router = &router.Router{}
 	exp.router.Init()
+	exp.properties = make(map[string]interface{})
 	return exp
 }
 
 // ServeHTTP
-// 
 // Default function to handle HTTP request
 func (e *express) ServeHTTP(res http.ResponseWriter,req *http.Request) {
 	hijack, ok := res.(http.Hijacker)
@@ -123,6 +124,18 @@ func (e *express) Use(middleware router.Middleware) *express{
 	return e
 }
 
+// Sets global app properties that can be accessed under express struct
+func (e *express) Set(key string, value interface{}) *express{
+	e.properties[key] = value
+	return e
+}
+
+// Return the app property
+func (e *express) Get(key string, value interface{}) *express{
+	return e.properties[key]
+}
+
+// Starts the App Server
 func (e *express) Start(port string) *express{
 	if e.started {
 		return e
