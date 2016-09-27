@@ -56,7 +56,7 @@ func (e *express) ServeHTTP(res http.ResponseWriter,req *http.Request) {
 				// we are done
 				return
 			}
-			var handler, i = e.router.FindNext(index, request.Method, request.URL, request)
+			var handler, i, isMiddleware = e.router.FindNext(index, request.Method, request.URL, request)
 			if i == -1 {
 				// done handling
 				if executedRoutes == 0 {
@@ -73,7 +73,9 @@ func (e *express) ServeHTTP(res http.ResponseWriter,req *http.Request) {
 					}
 				}
 			} else {
-				executedRoutes++
+				if isMiddleware == false {
+					executedRoutes++
+				}
 				index = i + 1
 				handler(request, response, next)
 				if response.HasEnded() == false {
