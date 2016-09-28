@@ -37,7 +37,7 @@ You can write custom middlewares, wrappers in the similar fashion. Middlewares c
 func main (){
   var app = express.Express()
   app.Use(func(req *request.Request, res *response.Response, next func()){
-    res.Params["I-Am-Adding-Something"] = "something"
+    req.Params["I-Am-Adding-Something"] = "something"
     next()
   })
   app.Get("/:service/:object([0-9]+)", func(req *request.Request, res *response.Response, next func()){
