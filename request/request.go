@@ -58,7 +58,6 @@ func (req *Request) Init(request *http.Request) *Request{
 	req.Params = make(map[string]string)
 	req._url = request.URL
 	req.fileReader = nil
-	log.Print(request.Method, " ", request.URL.Path)
 	for key, value := range request.Header {
 		req.Header[key] = value[0]
 	}
