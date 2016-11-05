@@ -73,6 +73,20 @@ func main (){
   app.Start("8080")
 }
 ```
+
+## Sending File
+You can send a file by using the helper ```res.SendFile(url string, doNotSendCachedData bool)```
+```go
+func main (){
+  var app = express.Express()
+  
+  app.Get("/public/:filename", func(req *request.Request, res *response.Response, next func()){
+	res.SendFile(filename, false)
+  })
+  app.Start("8080")
+}
+```
+
 ## Post Body
 ```go
 func main (){
@@ -118,7 +132,6 @@ func main (){
   app.Start("8080")
 }
 ```
-
 ## File Uploading
 The ```response.Response``` struct has a ```GetFile()``` method, which reads a single file at a time, you can make looped calls to retrieve all the files, however this feature is not thoroughly tested, bugs can be reported for the same.
 
