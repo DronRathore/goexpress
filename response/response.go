@@ -104,7 +104,10 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 	file, err := os.OpenFile(url, os.O_RDONLY, 0644)
 	if err != nil {
 		// panic and return false
-		log.Print("Cannot open ", url, err)
+		log.Print("File not found ", url, err)
+		res.Header.SetStatus(404)
+		res.Header.FlushHeaders()
+		res.End()
 		return false
 	}
 	stat, err := file.Stat()
@@ -136,7 +139,9 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 					res.Header.Set("Cache-Control", "max-age=300000")
 					miss = false
 				} else {
+					res.End()
 					log.Print("Cannot write header after being sent")
+					return false
 				}
 			} // a miss
 		}
@@ -151,7 +156,9 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 					res.Header.Set("Content-Type", ext)
 				}
 			} else {
+				res.End()
 				log.Print("Cannot write header after being flushed")
+				return false
 			}
 		}
 
@@ -159,6 +166,10 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 			res.Header.Set("Date", currTime)
 			res.Cookie.Finish()
 			res.Header.FlushHeaders()
+		} else {
+			res.End()
+			log.Print("Cannot write header after being flushed")
+			return false
 		}
 		if miss == false {
 			// empty response for cache hit
