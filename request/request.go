@@ -4,7 +4,6 @@
 package request
 
 import (
-	"log"
 	"net/http"
 	"mime/multipart"
 	"io"
@@ -59,7 +58,8 @@ func (req *Request) Init(request *http.Request) *Request{
 	req._url = request.URL
 	req.fileReader = nil
 	for key, value := range request.Header {
-		req.Header[key] = value[0]
+		// lowercase the header key names
+		req.Header[strings.ToLower(key)] = value[0]
 	}
 
 	if req.Header["Content-Type"] == "application/json" {
