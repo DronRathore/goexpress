@@ -75,6 +75,11 @@ func (h *Header) Get(key string) (string) {
 	return h.response.Header().Get(key)
 }
 
+// Returns a request header
+func (h *Header) GetRequestHeader(key string) []string {
+	return h.request.Header[key]
+}
+
 // Deletes a Header
 func (h *Header) Del(key string) *Header{
 	h.response.Header().Del(key)
