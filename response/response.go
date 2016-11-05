@@ -122,7 +122,14 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 	var modTime = stat.ModTime().Unix()
 	var currTime = (time.Now()).Format(time.RFC1123)
 	var etag = res.Header.GetRequestHeader("If-None-Match")
-	
+	var ext = utils.GetMimeType(url)
+	if res.Header.CanSendHeader() {
+		if ext == "" {
+			res.Header.Set("Content-Type", "none")
+		} else {
+			res.Header.Set("Content-Type", ext)
+		}
+	}
 	if noCache == false {
 		hasher := md5.New()
 		io.WriteString(hasher, strconv.FormatInt(modTime, 10))
@@ -133,8 +140,6 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 			if etag[0] == hash {
 				// its a hit!
 				if res.Header.CanSendHeader() == true {
-					var ext = utils.GetMimeType(url)
-					res.Header.Set("Content-Type", ext)
 					res.Header.SetStatus(304)
 					res.Header.Set("Cache-Control", "max-age=300000")
 					miss = false
@@ -149,12 +154,6 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 		if miss == true {
 			if res.Header.CanSendHeader() == true {
 				res.Header.Set("Etag", hash)
-				var ext = utils.GetMimeType(url)
-				if ext == "" {
-					res.Header.Set("Content-Type", "none")
-				} else {
-					res.Header.Set("Content-Type", ext)
-				}
 			} else {
 				res.End()
 				log.Print("Cannot write header after being flushed")
@@ -176,6 +175,9 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 			res.End()
 			return true
 		}
+	} else {
+		res.Cookie.Finish()
+		res.Header.FlushHeaders()
 	}
 
 	var offset int64 = 0
