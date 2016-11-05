@@ -7,10 +7,19 @@ import (
 	"net/http"
 	"bufio"
 	"fmt"
+	"os"
+	"crypto/md5"
+	"io"
+	"strconv"
 	"encoding/json"
+	"encoding/hex"
+	"time"
 	header "github.com/DronRathore/goexpress/header"
 	cookie "github.com/DronRathore/goexpress/cookie"
+	utils "github.com/DronRathore/go-mimes"
 )
+
+type NextFunc func(NextFunc)
 
 // Response Structure extends basic http.ResponseWriter interface
 // It encapsulates Header and Cookie class for direct access
@@ -48,10 +57,16 @@ func (res *Response) Write(content string) *Response{
 	if res.Header.BasicSent() == false && res.Header.CanSendHeader() == true {
 		res.Cookie.Finish()
 		if sent := res.Header.FlushHeaders(); sent == false {
-			log.Panic("Failed to push headers")
+			log.Print("Failed to push headers")
 		}
 	}
 	var bytes = []byte(content)
+	res.WriteBytes(bytes)
+	return res
+}
+
+// Writes an array of bytes to the socket
+func (res *Response) WriteBytes(bytes []byte) *Response {
 	var chunkSize = fmt.Sprintf("%x", len(bytes))
 	res.writer.WriteString(chunkSize + "\r\n")
 	res.writer.Write(bytes)
@@ -68,7 +83,7 @@ func (res *Response) sendContent(status int, content_type string, content []byte
 		res.Header.Set("Content-Type", content_type)
 		res.Cookie.Finish()
 		if sent := res.Header.FlushHeaders(); sent == false {
-			log.Panic("Failed to write headers")
+			log.Print("Failed to write headers")
 		}
 	}
 	var chunkSize = fmt.Sprintf("%x", len(content))
@@ -78,6 +93,116 @@ func (res *Response) sendContent(status int, content_type string, content []byte
 	res.writer.Writer.Flush()
 	res.End()
 }
+// Reads a file in buffer and writes it to the socket
+// It also checks with the existing E-Tags list
+// so as to provide caching.
+func (res *Response) SendFile(url string, noCache bool) bool {
+	if len(url) == 0 {
+		// no need to panic ?
+		return false
+	}
+	file, err := os.OpenFile(url, os.O_RDONLY, 0644)
+	if err != nil {
+		// panic and return false
+		log.Print("Cannot open ", url, err)
+		return false
+	}
+	stat, err := file.Stat()
+	if err != nil {
+		log.Print("Couldn't get fstat of ", url)
+		return false
+	}
+	if stat.IsDir() == true {
+		// cannot send dir, abort
+		return false
+	}
+	var modTime = stat.ModTime().Unix()
+	var currTime = (time.Now()).Format(time.RFC1123)
+	var etag = res.Header.GetRequestHeader("If-None-Match")
+	
+	if noCache == false {
+		hasher := md5.New()
+		io.WriteString(hasher, strconv.FormatInt(modTime, 10))
+		hash := hex.EncodeToString(hasher.Sum(nil))
+		var miss bool = true
+		// do we have an etag
+		if len(etag) == 1 {
+			if etag[0] == hash {
+				// its a hit!
+				if res.Header.CanSendHeader() == true {
+					var ext = utils.GetMimeType(url)
+					res.Header.Set("Content-Type", ext)
+					res.Header.SetStatus(304)
+					res.Header.Set("Cache-Control", "max-age=300000")
+					miss = false
+				} else {
+					log.Print("Cannot write header after being sent")
+				}
+			} // a miss
+		}
+		
+		if miss == true {
+			if res.Header.CanSendHeader() == true {
+				res.Header.Set("Etag", hash)
+				var ext = utils.GetMimeType(url)
+				if ext == "" {
+					res.Header.Set("Content-Type", "none")
+				} else {
+					res.Header.Set("Content-Type", ext)
+				}
+			} else {
+				log.Print("Cannot write header after being flushed")
+			}
+		}
+
+		if res.Header.CanSendHeader() == true {
+			res.Header.Set("Date", currTime)
+			res.Cookie.Finish()
+			res.Header.FlushHeaders()
+		}
+		if miss == false {
+			// empty response for cache hit
+			res.End()
+			return true
+		}
+	}
+
+	var offset int64 = 0
+	// async read and write
+	var reader NextFunc
+	var channel = make(chan bool)
+	reader = func(reader NextFunc){
+		go func(channel chan bool){
+			var data = make([]byte, 1500)
+			n, err := file.ReadAt(data, offset)
+			if err != nil {
+				if err == io.EOF {
+					res.WriteBytes(data[:n-1])
+					res.End()
+					channel<-true
+					return
+				}
+				log.Print("Error while reading ", url, err)
+				res.End()
+				channel<-true
+				return
+			} else {
+				if n == 0 {
+					res.End()
+					channel<-true
+					return
+				}
+				res.WriteBytes(data)
+				offset = offset + int64(n)
+				reader(reader)
+				return
+			}
+		}(channel)
+	}
+	reader(reader)
+	<-channel
+	return true
+}
 
 // Ends a response and drops the connection with client
 func (res *Response) End(){
@@ -86,7 +211,7 @@ func (res *Response) End(){
 	err := res.connection.Close()
 	res.ended = true
 	if err != nil {
-		log.Panic("Couldn't close the connection, already lost?")
+		log.Print("Couldn't close the connection, already lost?")
 	}
 }
 
