@@ -42,9 +42,10 @@ type Request struct{
 	Body map[string][]string
 	Cookies *cookie.Cookie
 	JSON *json.Decoder
+	props *map[string]interface{}
 }
 
-func (req *Request) Init(request *http.Request) *Request{
+func (req *Request) Init(request *http.Request, props *map[string]interface{}) *Request{
 	req.Header = make(map[string]string)
 	req.Body = make(map[string][]string)
 	req.Body = request.Form
@@ -56,6 +57,7 @@ func (req *Request) Init(request *http.Request) *Request{
 	req.URL = request.URL.Path
 	req.Params = make(map[string]string)
 	req._url = request.URL
+	req.props = props
 	req.fileReader = nil
 	for key, value := range request.Header {
 		// lowercase the header key names

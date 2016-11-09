@@ -31,10 +31,13 @@ type Response struct{
 	writer *bufio.ReadWriter
 	connection net.Conn
 	ended bool
+	props *map[string]interface{}
+	url string
+	method string
 }
 // Intialise the Response Struct, requires the Hijacked buffer,
 // connection and Response interface
-func (res *Response) Init(rs http.ResponseWriter, r *http.Request, w *bufio.ReadWriter, con net.Conn) *Response{
+func (res *Response) Init(rs http.ResponseWriter, r *http.Request, w *bufio.ReadWriter, con net.Conn, props *map[string]interface{}) *Response{
 	res.response = rs
 	res.writer = w
 	res.connection = con
@@ -43,7 +46,10 @@ func (res *Response) Init(rs http.ResponseWriter, r *http.Request, w *bufio.Read
 	res.Cookie = &cookie.Cookie{}
 	res.Cookie.Init(res, r)
 	res.Locals = make(map[string]interface{})
+	res.url = r.URL.Path
 	res.ended = false
+	res.props = props
+	res.method = r.Method
 	return res
 }
 
@@ -225,6 +231,8 @@ func (res *Response) End(){
 	res.ended = true
 	if err != nil {
 		log.Print("Couldn't close the connection, already lost?")
+	} else if (*res.props)["log"] == true {
+		log.Print(res.method, " ", res.url, " ", res.Header.StatusCode)
 	}
 }
 

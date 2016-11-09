@@ -45,8 +45,8 @@ func (e *express) ServeHTTP(res http.ResponseWriter,req *http.Request) {
 		}
 		var response = &response.Response{}
 		var request = &request.Request{}
-		request.Init(req)
-		response.Init(res, req, bufrw, conn)
+		request.Init(req, &e.properties)
+		response.Init(res, req, bufrw, conn, &e.properties)
 		var index = 0
 		var executedRoutes = 0
 		var next func()
