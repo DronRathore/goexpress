@@ -31,6 +31,29 @@ func main (){
   app.Start("8080")
 }
 ```
+
+__Note__: You can also adhoc an ```express.Router()``` instance too much like it is done in expressjs
+```go
+package main
+import (
+  express "github.com/DronRathore/goexpress"
+  request "github.com/DronRathore/goexpress/request"
+  response "github.com/DronRathore/goexpress/response"
+)
+var LibRoutes = func (){
+  // create a new Router instance which works in similar way as app.Get/Post etc
+  var LibRouter = express.Router()
+  LibRouter.Get("/lib/:api_version", func(req *request.Request, res *response.Response, next func()){
+    res.Json(req.Params["api_version"])
+  })
+  return *LibRoutes
+}() // immediate invocation
+func main(){
+  var app = express.Express()
+  app.Use(LibRoutes) // attaches the Library Routes
+  app.Start("8080")
+}
+```
 ## Middleware
 You can write custom middlewares, wrappers in the similar fashion. Middlewares can be used to add websocket upgradation lib, session handling lib, static assets server handler
 ```go
@@ -85,6 +108,15 @@ func main (){
   })
   app.Start("8080")
 }
+```
+__Note__: You can now also send an auto downloadable file too using ```res.Download``` api
+```go
+/*
+  @params:
+    path: Full path to the file in local machine
+    filename: The name to be sent to the client
+*/
+res.Download(path string, filename string)
 ```
 
 ## Post Body

@@ -71,18 +71,42 @@ func (r* Router) Delete(url string, middleware Middleware) *Router{
 	r.addHandler("delete", false, compileRegex(url), middleware)
 	return r
 }
-
-func (r* Router) Use(middleware Middleware) *Router{
-	var regex = compileRegex("(.*)")
-	// A middleware is for all type of routes
-	r.addHandler("get", true, regex, middleware)
-	r.addHandler("post", true, regex, middleware)
-	r.addHandler("put", true, regex, middleware)
-	r.addHandler("patch", true, regex, middleware)
-	r.addHandler("delete", true, regex, middleware)
+// Router.Use can take a function or a new express.Router() instance as argument
+func (r* Router) Use(middleware interface{}) *Router{
+	router, ok := middleware.(Router)
+	if ok {
+		r.useRouter(router)
+	} else {
+		mware, ok := middleware.(func(request *request.Request, response *response.Response, next func()))
+		if ok {
+			var regex = compileRegex("(.*)")
+			// A middleware is for all type of routes
+			r.addHandler("get", true, regex, mware)
+			r.addHandler("post", true, regex, mware)
+			r.addHandler("put", true, regex, mware)
+			r.addHandler("patch", true, regex, mware)
+			r.addHandler("delete", true, regex, mware)
+		} else {
+			panic("express.Router.Use can only take a function or a Router instance")
+		}
+	}
 	return r
 }
 
+func (r* Router) useRouter(router Router) *Router {
+	routes := router.getRoutes()
+	for route_type, list := range routes {
+		if r.routes[route_type] == nil {
+			r.routes[route_type] = []*Route{}
+		}
+		r.routes[route_type] = append(r.routes[route_type], list...)
+	}
+	return r;
+}
+
+func (r* Router) getRoutes() map[string][]*Route {
+	return r.routes
+}
 // Finds the suitable router for given url and method
 // It returns the middleware if found and a cursor index of array
 func (r* Router) FindNext(index int, method string, url string, request *request.Request) (Middleware, int, bool){

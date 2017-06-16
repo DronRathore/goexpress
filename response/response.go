@@ -222,6 +222,17 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 	<-channel
 	return true
 }
+// Send a download file to the client
+func (res *Response) Download(path string, file_name string) bool {
+	if res.Header.CanSendHeader() == true {
+		res.Header.Set("Content-Disposition", "attachment; filename=\"" + file_name+ "\"")
+		return res.SendFile(path, false)
+	} else {
+		log.Print("Cannot Send header after being flushed")
+		res.End()
+		return false
+	}
+}
 
 // Ends a response and drops the connection with client
 func (res *Response) End(){
