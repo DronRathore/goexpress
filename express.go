@@ -121,9 +121,16 @@ func (e *express) Delete(url string, middleware router.Middleware) *express{
 }
 
 // Extension to provide Router.Use functionality
-func (e *express) Use(middleware router.Middleware) *express{
+func (e *express) Use(middleware interface{}) *express{
 	e.router.Use(middleware)
 	return e
+}
+
+// Returns a new instance of express Router
+func Router() *router.Router {
+	var route *router.Router = &router.Router{}
+	route.Init()
+	return route;
 }
 
 // Sets global app properties that can be accessed under express struct
