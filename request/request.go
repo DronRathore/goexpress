@@ -49,6 +49,7 @@ func (req *Request) Init(request *http.Request, props *map[string]interface{}) *
 	req.Header = make(map[string]string)
 	req.Body = make(map[string][]string)
 	req.Body = request.Form
+	req.ref = request
 	req.Cookies = &cookie.Cookie{}
 	req.Cookies.InitReadOnly(request)
 	req.Query = make(map[string][]string)
