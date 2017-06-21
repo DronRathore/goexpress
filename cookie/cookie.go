@@ -74,6 +74,11 @@ func (c *Cookie) Get(name string) string{
 	return cookie.Value
 }
 
+// Returns the map of all the cookies
+func (c *Cookie) GetAll() map[string]*http.Cookie {
+	return c.cookies
+}
+
 // An internal function to set all the cookies before pushing response body
 func (c *Cookie) Finish(){
 	if c.readonly {
