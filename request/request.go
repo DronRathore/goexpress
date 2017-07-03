@@ -62,7 +62,7 @@ func (req *Request) Init(request *http.Request, props *map[string]interface{}) *
 	req.fileReader = nil
 	for key, value := range request.Header {
 		// lowercase the header key names
-		req.Header[strings.ToLower(key)] = value[0]
+		req.Header[strings.ToLower(key)] = strings.Join(value, ",")
 	}
 
 	if req.Header["Content-Type"] == "application/json" {
