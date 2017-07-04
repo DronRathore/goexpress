@@ -22,6 +22,17 @@ type express struct {
 	started bool
 	properties map[string]interface{}
 }
+type ExpressInterface interface {
+	Use(interface{}) *express
+	Get(string, router.Middleware) *express
+	Post(string, router.Middleware) *express
+	Put(string, router.Middleware) *express
+	Patch(string, router.Middleware) *express
+	Delete(string, router.Middleware) *express
+	SetProp(string, interface{}) *express
+	GetProp(string, interface{}) interface{}
+	Start(string) *express
+}
 // Returns a new instance of express
 func Express() *express{
 	var exp = &express{}
