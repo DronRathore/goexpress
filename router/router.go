@@ -48,27 +48,27 @@ func (r* Router) addHandler(method string, isMiddleware bool, url *regexp.Regexp
 // Router functions are extended by express itself
 
 func (r* Router) Get(url string, middleware Middleware) *Router{
-	r.addHandler("get", false, compileRegex(url), middleware)
+	r.addHandler("get", false, CompileRegex(url), middleware)
 	return r
 }
 
 func (r* Router) Post(url string, middleware Middleware) *Router{
-	r.addHandler("post", false, compileRegex(url), middleware)
+	r.addHandler("post", false, CompileRegex(url), middleware)
 	return r
 }
 
 func (r* Router) Put(url string, middleware Middleware) *Router{
-	r.addHandler("put", false, compileRegex(url), middleware)
+	r.addHandler("put", false, CompileRegex(url), middleware)
 	return r
 }
 
 func (r* Router) Patch(url string, middleware Middleware) *Router{
-	r.addHandler("patch", false, compileRegex(url), middleware)
+	r.addHandler("patch", false, CompileRegex(url), middleware)
 	return r
 }
 
 func (r* Router) Delete(url string, middleware Middleware) *Router{
-	r.addHandler("delete", false, compileRegex(url), middleware)
+	r.addHandler("delete", false, CompileRegex(url), middleware)
 	return r
 }
 // Router.Use can take a function or a new express.Router() instance as argument
@@ -79,7 +79,7 @@ func (r* Router) Use(middleware interface{}) *Router{
 	} else {
 		mware, ok := middleware.(func(request *request.Request, response *response.Response, next func()))
 		if ok {
-			var regex = compileRegex("(.*)")
+			var regex = CompileRegex("(.*)")
 			// A middleware is for all type of routes
 			r.addHandler("get", true, regex, mware)
 			r.addHandler("post", true, regex, mware)
@@ -127,8 +127,8 @@ func (r* Router) FindNext(index int, method string, url string, request *request
 	return nil, -1, false
 }
 
-
-func compileRegex(url string) *regexp.Regexp {
+// Helper which returns a golang RegExp for a given express route string
+func CompileRegex(url string) *regexp.Regexp {
 	var i = 0
 	var buffer = "/"
 	var regexStr = "^"
