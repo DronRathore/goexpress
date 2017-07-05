@@ -143,7 +143,7 @@ func CompileRegex(url string) *regexp.Regexp {
 			buffer = ""
 			i++
 		} else {
-			if url[i] == ':' && ( (i-1 >=0 && url[i-1] == '/') || (i-1 == -1)) {
+			if url[i] == ':' && ( (i-1 > 0 && url[i-1] == '/') || (i-1 == -1) || (i-1 > 0)) {
 				// a variable found, lets read it
 				var tempbuffer = "(?P<"
 				var variableName = ""
