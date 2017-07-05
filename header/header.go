@@ -103,7 +103,7 @@ func (h *Header) FlushHeaders() bool{
 		}
 		// write the latest headers
 		if h.Get("Content-Type") == "" {
-			h.Set("Content-Type", "text/html")
+			h.Set("Content-Type", "text/html;charset=utf-8")
 		}
 		if err := h.response.Header().Write(h.writer); err!=nil {
 			return false
