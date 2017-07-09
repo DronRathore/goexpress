@@ -22,6 +22,8 @@ type express struct {
 	started bool
 	properties map[string]interface{}
 }
+
+// Public Interface to allow access to express struct's member functions
 type ExpressInterface interface {
 	Use(interface{}) *express
 	Get(string, router.Middleware) *express

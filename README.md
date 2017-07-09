@@ -70,6 +70,18 @@ func main (){
   app.Start("8080")
 }
 ```
+## ExpressInterface
+You can pass around the instance of ```express``` struct across packages using this interface.
+```go
+func main(){
+  var app = express.Express()
+  attachHandlers(app)
+}
+func attachHandlers(instance express.ExpressInterface){
+  instance.Use(someMiddleware)
+  instance.Set("logging", true)
+}
+```
 ## Cookies
 ```go
 import (
