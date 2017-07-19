@@ -196,7 +196,7 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 			n, err := file.ReadAt(data, offset)
 			if err != nil {
 				if err == io.EOF {
-					res.WriteBytes(data[:n-1])
+					res.WriteBytes(data[:n])
 					res.End()
 					channel<-true
 					return
