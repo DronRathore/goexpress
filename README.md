@@ -177,7 +177,7 @@ func main (){
 }
 ```
 ## File Uploading
-The ```response.Response``` struct has a ```GetFile()``` method, which reads a single file at a time, you can make looped calls to retrieve all the files.
+The ```request.Request``` struct has a ```GetFile()``` method, which reads a single file at a time, you can make looped calls to retrieve all the files.
 ```go
 func(req *request.Request, res *response.Response, next func()){
 	var file *request.File
