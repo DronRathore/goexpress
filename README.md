@@ -177,7 +177,19 @@ func main (){
 }
 ```
 ## File Uploading
-The ```response.Response``` struct has a ```GetFile()``` method, which reads a single file at a time, you can make looped calls to retrieve all the files, however this feature is not thoroughly tested, bugs can be reported for the same.
+The ```response.Response``` struct has a ```GetFile()``` method, which reads a single file at a time, you can make looped calls to retrieve all the files.
+```go
+func(req *request.Request, res *response.Response, next func()){
+	var file *request.File
+	while ((file = req.GetFile()) != nil){
+		// you can use stream too, ReadAll is for example
+		data, err := ioutil.ReadAll(file.Reader)
+		// now you can use the data also these keys are available
+		// name = file.Name
+		// form_input_name = file.FormName
+	}
+}
+```
 
 ## Testing
 There are no testing added to this package yet, I am hoping to get my hands dirty in testing, if anyone can help me out with this, feel free to open a PR.
