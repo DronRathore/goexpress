@@ -249,7 +249,7 @@ func (res *Response) End(){
 
 // Redirects a request, takes the url as the Location
 func (res *Response) Redirect(url string) *Response{
-	res.Header.SetStatus(301)
+	res.Header.SetStatus(302)
 	res.Header.Set("Location", url)
 	res.Cookie.Finish()
 	res.Header.FlushHeaders()
