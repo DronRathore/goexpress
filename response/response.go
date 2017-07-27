@@ -251,6 +251,7 @@ func (res *Response) End(){
 func (res *Response) Redirect(url string) *Response{
 	res.Header.SetStatus(301)
 	res.Header.Set("Location", url)
+	res.Cookie.Finish()
 	res.Header.FlushHeaders()
 	res.ended = true
 	res.End()
