@@ -70,6 +70,10 @@ func (req *Request) Init(request *http.Request, props *map[string]interface{}) *
 	} else {
 		request.ParseForm()
 	}
+	// check if we have an anonymous form posted
+	if len(request.PostForm) > 0 && len(req.Body) == 0 {
+		req.Body = make(map[string][]string)
+	}
 	for key, value := range request.PostForm {
 		req.Body[key] = value
 	}
