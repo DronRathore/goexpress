@@ -196,7 +196,7 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 			n, err := file.ReadAt(data, offset)
 			if err != nil {
 				if err == io.EOF {
-					res.WriteBytes(data[:n-1])
+					res.WriteBytes(data[:n])
 					res.End()
 					channel<-true
 					return
@@ -249,8 +249,9 @@ func (res *Response) End(){
 
 // Redirects a request, takes the url as the Location
 func (res *Response) Redirect(url string) *Response{
-	res.Header.SetStatus(301)
+	res.Header.SetStatus(302)
 	res.Header.Set("Location", url)
+	res.Cookie.Finish()
 	res.Header.FlushHeaders()
 	res.ended = true
 	res.End()
