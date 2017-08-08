@@ -177,6 +177,10 @@ func main (){
 }
 ```
 ## File Uploading
+### Form Data Post
+If a request has content-type form-data than goexpress will automatically parse and load all the files in ```request.Files``` array. It will also populate ```req.Body``` if the post/put request contains any text key values.
+
+### Normal Post
 The ```response.Response``` struct has a ```GetFile()``` method, which reads a single file at a time, you can make looped calls to retrieve all the files, however this feature is not thoroughly tested, bugs can be reported for the same.
 
 ## Testing
