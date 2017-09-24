@@ -1,43 +1,47 @@
-// Response package provides the core functionality of handling
+// Package response package provides the core functionality of handling
 // the client connection, chunked response and other features
 package response
+
 import (
-	"net"
-	"log"
-	"net/http"
 	"bufio"
-	"fmt"
-	"os"
 	"crypto/md5"
-	"io"
-	"strconv"
-	"encoding/json"
 	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net"
+	"net/http"
+	"os"
+	"strconv"
 	"time"
-	header "github.com/DronRathore/goexpress/header"
-	cookie "github.com/DronRathore/goexpress/cookie"
+
 	utils "github.com/DronRathore/go-mimes"
+	cookie "github.com/DronRathore/goexpress/cookie"
+	header "github.com/DronRathore/goexpress/header"
 )
 
+// NextFunc define next function
 type NextFunc func(NextFunc)
 
 // Response Structure extends basic http.ResponseWriter interface
 // It encapsulates Header and Cookie class for direct access
-type Response struct{
-	response http.ResponseWriter
-	Header *header.Header
-	Cookie *cookie.Cookie
-	Locals map[string]interface{}
-	writer *bufio.ReadWriter
+type Response struct {
+	response   http.ResponseWriter
+	Header     *header.Header
+	Cookie     *cookie.Cookie
+	Locals     map[string]interface{}
+	writer     *bufio.ReadWriter
 	connection net.Conn
-	ended bool
-	props *map[string]interface{}
-	url string
-	method string
+	ended      bool
+	props      *map[string]interface{}
+	url        string
+	method     string
 }
-// Intialise the Response Struct, requires the Hijacked buffer,
+
+// Init the Response Struct, requires the Hijacked buffer,
 // connection and Response interface
-func (res *Response) Init(rs http.ResponseWriter, r *http.Request, w *bufio.ReadWriter, con net.Conn, props *map[string]interface{}) *Response{
+func (res *Response) Init(rs http.ResponseWriter, r *http.Request, w *bufio.ReadWriter, con net.Conn, props *map[string]interface{}) *Response {
 	res.response = rs
 	res.writer = w
 	res.connection = con
@@ -53,13 +57,13 @@ func (res *Response) Init(rs http.ResponseWriter, r *http.Request, w *bufio.Read
 	return res
 }
 
-// This function is for internal Use by Cookie Struct
-func (res *Response) AddCookie(key string, value string){
+// AddCookie function is for internal Use by Cookie Struct
+func (res *Response) AddCookie(key string, value string) {
 	res.Header.AppendCookie(key, value)
 }
 
 // Writes a string content to the buffer and immediately flushes the same
-func (res *Response) Write(content string) *Response{
+func (res *Response) Write(content string) *Response {
 	if res.Header.BasicSent() == false && res.Header.CanSendHeader() == true {
 		res.Cookie.Finish()
 		if sent := res.Header.FlushHeaders(); sent == false {
@@ -71,7 +75,7 @@ func (res *Response) Write(content string) *Response{
 	return res
 }
 
-// Writes an array of bytes to the socket
+// WriteBytes writes an array of bytes to the socket
 func (res *Response) WriteBytes(bytes []byte) *Response {
 	var chunkSize = fmt.Sprintf("%x", len(bytes))
 	res.writer.WriteString(chunkSize + "\r\n")
@@ -81,12 +85,12 @@ func (res *Response) WriteBytes(bytes []byte) *Response {
 	return res
 }
 
-func (res *Response) sendContent(status int, content_type string, content []byte) {
+func (res *Response) sendContent(status int, contentType string, content []byte) {
 	if res.Header.BasicSent() == false {
 		res.Header.SetStatus(status)
 	}
 	if res.Header.CanSendHeader() == true {
-		res.Header.Set("Content-Type", content_type)
+		res.Header.Set("Content-Type", contentType)
 		res.Cookie.Finish()
 		if sent := res.Header.FlushHeaders(); sent == false {
 			log.Print("Failed to write headers")
@@ -99,7 +103,8 @@ func (res *Response) sendContent(status int, content_type string, content []byte
 	res.writer.Writer.Flush()
 	res.End()
 }
-// Reads a file in buffer and writes it to the socket
+
+// SendFile reads a file in buffer and writes it to the socket
 // It also checks with the existing E-Tags list
 // so as to provide caching.
 func (res *Response) SendFile(url string, noCache bool) bool {
@@ -140,7 +145,7 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 		hasher := md5.New()
 		io.WriteString(hasher, strconv.FormatInt(modTime, 10))
 		hash := hex.EncodeToString(hasher.Sum(nil))
-		var miss bool = true
+		var miss = true
 		// do we have an etag
 		if len(etag) == 1 {
 			if etag[0] == hash {
@@ -156,7 +161,7 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 				}
 			} // a miss
 		}
-		
+
 		if miss == true {
 			if res.Header.CanSendHeader() == true {
 				res.Header.Set("Etag", hash)
@@ -186,56 +191,57 @@ func (res *Response) SendFile(url string, noCache bool) bool {
 		res.Header.FlushHeaders()
 	}
 
-	var offset int64 = 0
+	var offset int64
 	// async read and write
 	var reader NextFunc
 	var channel = make(chan bool)
-	reader = func(reader NextFunc){
-		go func(channel chan bool){
+	reader = func(reader NextFunc) {
+		go func(channel chan bool) {
 			var data = make([]byte, 1500)
 			n, err := file.ReadAt(data, offset)
 			if err != nil {
 				if err == io.EOF {
 					res.WriteBytes(data[:n])
 					res.End()
-					channel<-true
+					channel <- true
 					return
 				}
 				log.Print("Error while reading ", url, err)
 				res.End()
-				channel<-true
-				return
-			} else {
-				if n == 0 {
-					res.End()
-					channel<-true
-					return
-				}
-				res.WriteBytes(data)
-				offset = offset + int64(n)
-				reader(reader)
+				channel <- true
 				return
 			}
+			if n == 0 {
+				res.End()
+				channel <- true
+				return
+			}
+			res.WriteBytes(data)
+			offset = offset + int64(n)
+			reader(reader)
+			return
+
 		}(channel)
 	}
 	reader(reader)
 	<-channel
 	return true
 }
-// Send a download file to the client
-func (res *Response) Download(path string, file_name string) bool {
+
+// Download send a download file to the client
+func (res *Response) Download(path string, fileName string) bool {
 	if res.Header.CanSendHeader() == true {
-		res.Header.Set("Content-Disposition", "attachment; filename=\"" + file_name+ "\"")
+		res.Header.Set("Content-Disposition", "attachment; filename=\""+fileName+"\"")
 		return res.SendFile(path, false)
-	} else {
-		log.Print("Cannot Send header after being flushed")
-		res.End()
-		return false
 	}
+	log.Print("Cannot Send header after being flushed")
+	res.End()
+	return false
+
 }
 
-// Ends a response and drops the connection with client
-func (res *Response) End(){
+// End a response and drops the connection with client
+func (res *Response) End() {
 	res.writer.WriteString("0\r\n\r\n")
 	res.writer.Flush()
 	err := res.connection.Close()
@@ -247,8 +253,8 @@ func (res *Response) End(){
 	}
 }
 
-// Redirects a request, takes the url as the Location
-func (res *Response) Redirect(url string) *Response{
+// Redirect a request, takes the url as the Location
+func (res *Response) Redirect(url string) *Response {
 	res.Header.SetStatus(302)
 	res.Header.Set("Location", url)
 	res.Cookie.Finish()
@@ -258,33 +264,33 @@ func (res *Response) Redirect(url string) *Response{
 	return res
 }
 
-// An internal package use function to check the state of connection
-func (res *Response) HasEnded() bool{
+// HasEnded to check the state of connection
+func (res *Response) HasEnded() bool {
 	return res.ended
 }
 
-// A helper for middlewares to get the original http.ResponseWriter
-func (res *Response) GetRaw () http.ResponseWriter{
+// GetRaw is a helper for middlewares to get the original http.ResponseWriter
+func (res *Response) GetRaw() http.ResponseWriter {
 	return res.response
 }
 
-// A helper for middlewares to get the original net.Conn
-func (res *Response) GetConnection () net.Conn {
+// GetConnection is a helper for middlewares to get the original net.Conn
+func (res *Response) GetConnection() net.Conn {
 	return res.connection
 }
 
-// A helper for middlewares to get the original Request buffer
-func (res *Response) GetBuffer () *bufio.ReadWriter {
+// GetBuffer is a helper for middlewares to get the original Request buffer
+func (res *Response) GetBuffer() *bufio.ReadWriter {
 	return res.writer
 }
 
 // Send Error, takes HTTP status and a string content
-func (res *Response) Error (status int, str string) {
+func (res *Response) Error(status int, str string) {
 	res.sendContent(status, "text/html", []byte(str))
 }
 
-// Send JSON response, takes interface as input
-func (res *Response) JSON(content interface{}){
+// JSON send JSON response, takes interface as input
+func (res *Response) JSON(content interface{}) {
 	output, err := json.Marshal(content)
 	if err != nil {
 		res.sendContent(500, "application/json", []byte(""))

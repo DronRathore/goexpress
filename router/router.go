@@ -1,34 +1,37 @@
-// Package Router, returns instance for express Router
+// Package router returns instance for express Router
 // Functions defined here are extended by express.go itself
-// 
+//
 // Express Router takes the url regex as similar to the js one
 // Router.Get("/:param") will return the param in Response.Params["param"]
 package router
 
 import (
 	"regexp"
+
 	"github.com/DronRathore/goexpress/request"
 	"github.com/DronRathore/goexpress/response"
 )
-// An extension type to help loop of lookup in express.go
+
+// NextFunc is an extension type to help loop of lookup in express.go
 type NextFunc func(NextFunc)
+
 // Middleware function singature type
 type Middleware func(request *request.Request, response *response.Response, next func())
 
 // A Route contains a regexp and a Router.Middleware type handler
-type Route struct{
-	regex *regexp.Regexp
-	handler Middleware
+type Route struct {
+	regex        *regexp.Regexp
+	handler      Middleware
 	isMiddleware bool
 }
 
-// Collection of all method types routers
+// Router ia a Collection of all method types routers
 type Router struct {
 	routes map[string][]*Route
 }
 
-// Intialise the Router defaults
-func (r *Router) Init(){
+// Init intialises the Router defaults
+func (r *Router) Init() {
 	r.routes = make(map[string][]*Route)
 	r.routes["get"] = []*Route{}
 	r.routes["post"] = []*Route{}
@@ -37,7 +40,7 @@ func (r *Router) Init(){
 	r.routes["patch"] = []*Route{}
 }
 
-func (r* Router) addHandler(method string, isMiddleware bool, url *regexp.Regexp, middleware Middleware){
+func (r *Router) addHandler(method string, isMiddleware bool, url *regexp.Regexp, middleware Middleware) {
 	var route = &Route{}
 	route.regex = url
 	route.handler = middleware
@@ -45,34 +48,38 @@ func (r* Router) addHandler(method string, isMiddleware bool, url *regexp.Regexp
 	r.routes[method] = append(r.routes[method], route)
 }
 
-// Router functions are extended by express itself
-
-func (r* Router) Get(url string, middleware Middleware) *Router{
+// Get function
+func (r *Router) Get(url string, middleware Middleware) *Router {
 	r.addHandler("get", false, CompileRegex(url), middleware)
 	return r
 }
 
-func (r* Router) Post(url string, middleware Middleware) *Router{
+// Post function
+func (r *Router) Post(url string, middleware Middleware) *Router {
 	r.addHandler("post", false, CompileRegex(url), middleware)
 	return r
 }
 
-func (r* Router) Put(url string, middleware Middleware) *Router{
+// Put function
+func (r *Router) Put(url string, middleware Middleware) *Router {
 	r.addHandler("put", false, CompileRegex(url), middleware)
 	return r
 }
 
-func (r* Router) Patch(url string, middleware Middleware) *Router{
+// Patch function
+func (r *Router) Patch(url string, middleware Middleware) *Router {
 	r.addHandler("patch", false, CompileRegex(url), middleware)
 	return r
 }
 
-func (r* Router) Delete(url string, middleware Middleware) *Router{
+// Delete function
+func (r *Router) Delete(url string, middleware Middleware) *Router {
 	r.addHandler("delete", false, CompileRegex(url), middleware)
 	return r
 }
-// Router.Use can take a function or a new express.Router() instance as argument
-func (r* Router) Use(middleware interface{}) *Router{
+
+// Use can take a function or a new express.Router() instance as argument
+func (r *Router) Use(middleware interface{}) *Router {
 	router, ok := middleware.(Router)
 	if ok {
 		r.useRouter(router)
@@ -93,27 +100,28 @@ func (r* Router) Use(middleware interface{}) *Router{
 	return r
 }
 
-func (r* Router) useRouter(router Router) *Router {
+func (r *Router) useRouter(router Router) *Router {
 	routes := router.getRoutes()
-	for route_type, list := range routes {
-		if r.routes[route_type] == nil {
-			r.routes[route_type] = []*Route{}
+	for routeType, list := range routes {
+		if r.routes[routeType] == nil {
+			r.routes[routeType] = []*Route{}
 		}
-		r.routes[route_type] = append(r.routes[route_type], list...)
+		r.routes[routeType] = append(r.routes[routeType], list...)
 	}
-	return r;
+	return r
 }
 
-func (r* Router) getRoutes() map[string][]*Route {
+func (r *Router) getRoutes() map[string][]*Route {
 	return r.routes
 }
-// Finds the suitable router for given url and method
+
+// FindNext finds the suitable router for given url and method
 // It returns the middleware if found and a cursor index of array
-func (r* Router) FindNext(index int, method string, url string, request *request.Request) (Middleware, int, bool){
+func (r *Router) FindNext(index int, method string, url string, request *request.Request) (Middleware, int, bool) {
 	var i = index
-	for i < len(r.routes[method]){
+	for i < len(r.routes[method]) {
 		var route = r.routes[method][i]
-		if route.regex.MatchString(url){
+		if route.regex.MatchString(url) {
 			var regex = route.regex.FindStringSubmatch(url)
 			for i, name := range route.regex.SubexpNames() {
 				if name != "" {
@@ -127,7 +135,7 @@ func (r* Router) FindNext(index int, method string, url string, request *request
 	return nil, -1, false
 }
 
-// Helper which returns a golang RegExp for a given express route string
+// CompileRegex is a Helper which returns a golang RegExp for a given express route string
 func CompileRegex(url string) *regexp.Regexp {
 	var i = 0
 	var buffer = "/"
@@ -143,7 +151,7 @@ func CompileRegex(url string) *regexp.Regexp {
 			buffer = ""
 			i++
 		} else {
-			if url[i] == ':' && ( (i-1 > 0 && url[i-1] == '/') || (i-1 == -1) || (i-1 > 0)) {
+			if url[i] == ':' && ((i-1 > 0 && url[i-1] == '/') || (i-1 == -1) || (i-1 > 0)) {
 				// a variable found, lets read it
 				var tempbuffer = "(?P<"
 				var variableName = ""
@@ -165,7 +173,7 @@ func CompileRegex(url string) *regexp.Regexp {
 							}
 						}
 						tempbuffer = ""
-						break;
+						break
 					} else if url[i] == '(' {
 						if variableNameDone == false {
 							variableNameDone = true
@@ -173,12 +181,12 @@ func CompileRegex(url string) *regexp.Regexp {
 							hasRegex = true
 						}
 						tempbuffer += string(url[i])
-						if url[i - 1] != '\\' {
+						if url[i-1] != '\\' {
 							innerGroup++
 						}
 					} else if url[i] == ')' {
 						tempbuffer += string(url[i])
-						if url[i - 1] != '\\' {
+						if url[i-1] != '\\' {
 							innerGroup--
 						}
 					} else {
