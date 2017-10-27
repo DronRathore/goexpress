@@ -1,57 +1,62 @@
-// Request package provides the request structure
+// Package request provides the request structure
 // The package provides access to Headers, Cookies
 // Query Params, Post Body and Upload Files
 package request
 
 import (
+	"encoding/json"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/textproto"
-	"mime/multipart"
-	"io"
 	"net/url"
-	"strings"
-	"encoding/json"
 	"strconv"
+	"strings"
+
 	cookie "github.com/DronRathore/goexpress/cookie"
 )
 
-type Url struct{
+// URL provides a common struct of url
+type URL struct {
 	Username string
 	Password string
-	Url string
-	Path string
+	URL      string
+	Path     string
 	Fragment string
 }
 
-// Contains the reader to read the buffer content of
+// File contains the reader to read the buffer content of
 // uploading file
-type File struct{
-	Name string
+type File struct {
+	Name     string
 	FormName string
-	Mime textproto.MIMEHeader
-	File multipart.File
-	Reader *multipart.Part
+	Mime     textproto.MIMEHeader
+	File     multipart.File
+	Reader   *multipart.Part
 }
 
 // Request Structure
-type Request struct{
-	ref *http.Request
+type Request struct {
+	ref        *http.Request
 	fileReader *multipart.Reader
-	Header map[string]string
-	Files []*File
-	Method string
-	URL string
-	_url *url.URL
-	Params map[string]string // a map to be filled by router
-	Query map[string][]string
-	Body map[string][]string
-	Cookies *cookie.Cookie
-	JSON *json.Decoder
-	props *map[string]interface{}
+	Header     map[string]string
+	Files      []*File
+	Method     string
+	URL        string
+	_url       *url.URL
+	Params     map[string]string // a map to be filled by router
+	Query      map[string][]string
+	Body       map[string][]string
+	Cookies    *cookie.Cookie
+	JSON       *json.Decoder
+	props      *map[string]interface{}
 }
-const MAX_BUFFER_SIZE int64 = 1024*1024*1024
 
-func (req *Request) Init(request *http.Request, props *map[string]interface{}) *Request{
+// MaxBufferSize is a const type
+const MaxBufferSize int64 = 1024 * 1024 * 1024
+
+// Init a request
+func (req *Request) Init(request *http.Request, props *map[string]interface{}) *Request {
 	req.Header = make(map[string]string)
 	req.Body = make(map[string][]string)
 	req.Files = make([]*File, 0)
@@ -89,18 +94,18 @@ func (req *Request) Init(request *http.Request, props *map[string]interface{}) *
 	if req.IsMultipart(req.Header["content-type"], &boundary) {
 		var bufferSize int
 		if req.Header["content-length"] != "" {
-			bufferSize , _ = strconv.Atoi(req.Header["content-length"])
+			bufferSize, _ = strconv.Atoi(req.Header["content-length"])
 		}
 		req.ReadMultiPartBody(boundary, int64(bufferSize))
 	}
 	return req
 }
 
-// Return whether the request has a multipart form attached to it
+// IsMultipart return whether the request has a multipart form attached to it
 func (req *Request) IsMultipart(header string, boundary *string) bool {
 	parts := strings.Split(header, ";")
 	if len(parts) == 2 {
-		parts := strings.Split(parts[1], "=")
+		parts = strings.Split(parts[1], "=")
 		if len(parts) == 2 && strings.TrimSpace(parts[0]) == "boundary" {
 			*boundary = parts[1]
 			return true
@@ -109,9 +114,9 @@ func (req *Request) IsMultipart(header string, boundary *string) bool {
 	return false
 }
 
-// Reads a multipart form and populate the same in req params
-func (req *Request) ReadMultiPartBody(boundary string, length int64){
-	var size int64 = MAX_BUFFER_SIZE
+// ReadMultiPartBody reads a multipart form and populate the same in req params
+func (req *Request) ReadMultiPartBody(boundary string, length int64) {
+	var size = MaxBufferSize
 	if length != 0 {
 		size = length
 	}
@@ -139,21 +144,22 @@ func (req *Request) ReadMultiPartBody(boundary string, length int64){
 		}
 	}
 }
+
 // todo: Parser for Array and interface
 // func (req *Request) parseQuery(){
 // 	req._url.RawQuery
 
-// Returns the URL structure
-func(req *Request) GetUrl() *url.URL {
+// GetURL returns the URL structure
+func (req *Request) GetURL() *url.URL {
 	return req._url
 }
 
-// Helper that returns original raw http.Request object
-func (req *Request) GetRaw() *http.Request{
+// GetRaw is a Helper that returns original raw http.Request object
+func (req *Request) GetRaw() *http.Request {
 	return req.ref
 }
 
-// In case of file upload request, this function returns a file struct to read
+// GetFile returns a file struct to read in case of file upload request
 func (req *Request) GetFile() *File {
 	if req.fileReader == nil {
 		reader, err := req.ref.MultipartReader()
