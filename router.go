@@ -1,22 +1,19 @@
-// Package router returns instance for express Router
+// Package goexpress /router returns instance for express Router
 // Functions defined here are extended by express.go itself
 //
 // Express Router takes the url regex as similar to the js one
 // Router.Get("/:param") will return the param in Response.Params["param"]
-package router
+package goexpress
 
 import (
 	"regexp"
-
-	"github.com/DronRathore/goexpress/request"
-	"github.com/DronRathore/goexpress/response"
 )
 
 // NextFunc is an extension type to help loop of lookup in express.go
 type NextFunc func(NextFunc)
 
 // Middleware function singature type
-type Middleware func(request *request.Request, response *response.Response, next func())
+type Middleware func(request Request, response Response)
 
 // A Route contains a regexp and a Router.Middleware type handler
 type Route struct {
@@ -25,22 +22,23 @@ type Route struct {
 	isMiddleware bool
 }
 
-// Router ia a Collection of all method types routers
-type Router struct {
+// router is a Collection of all method types routers
+type router struct {
 	routes map[string][]*Route
 }
 
-// Init intialises the Router defaults
-func (r *Router) Init() {
+func newRouter() *router {
+	r := &router{}
 	r.routes = make(map[string][]*Route)
 	r.routes["get"] = []*Route{}
 	r.routes["post"] = []*Route{}
 	r.routes["put"] = []*Route{}
 	r.routes["delete"] = []*Route{}
 	r.routes["patch"] = []*Route{}
+	return r
 }
 
-func (r *Router) addHandler(method string, isMiddleware bool, url *regexp.Regexp, middleware Middleware) {
+func (r *router) addHandler(method string, isMiddleware bool, url *regexp.Regexp, middleware Middleware) {
 	var route = &Route{}
 	route.regex = url
 	route.handler = middleware
@@ -49,42 +47,43 @@ func (r *Router) addHandler(method string, isMiddleware bool, url *regexp.Regexp
 }
 
 // Get function
-func (r *Router) Get(url string, middleware Middleware) *Router {
+func (r *router) Get(url string, middleware Middleware) Router {
 	r.addHandler("get", false, CompileRegex(url), middleware)
 	return r
 }
 
 // Post function
-func (r *Router) Post(url string, middleware Middleware) *Router {
+func (r *router) Post(url string, middleware Middleware) Router {
 	r.addHandler("post", false, CompileRegex(url), middleware)
 	return r
 }
 
 // Put function
-func (r *Router) Put(url string, middleware Middleware) *Router {
+func (r *router) Put(url string, middleware Middleware) Router {
 	r.addHandler("put", false, CompileRegex(url), middleware)
 	return r
 }
 
 // Patch function
-func (r *Router) Patch(url string, middleware Middleware) *Router {
+func (r *router) Patch(url string, middleware Middleware) Router {
 	r.addHandler("patch", false, CompileRegex(url), middleware)
 	return r
 }
 
 // Delete function
-func (r *Router) Delete(url string, middleware Middleware) *Router {
+func (r *router) Delete(url string, middleware Middleware) Router {
 	r.addHandler("delete", false, CompileRegex(url), middleware)
 	return r
 }
 
 // Use can take a function or a new express.Router() instance as argument
-func (r *Router) Use(middleware interface{}) *Router {
+func (r *router) Use(middleware interface{}) Router {
+	// check if its another instance of the router
 	router, ok := middleware.(Router)
 	if ok {
 		r.useRouter(router)
 	} else {
-		mware, ok := middleware.(func(request *request.Request, response *response.Response, next func()))
+		mware, ok := middleware.(func(request Request, response Response))
 		if ok {
 			var regex = CompileRegex("(.*)")
 			// A middleware is for all type of routes
@@ -100,8 +99,8 @@ func (r *Router) Use(middleware interface{}) *Router {
 	return r
 }
 
-func (r *Router) useRouter(router Router) *Router {
-	routes := router.getRoutes()
+func (r *router) useRouter(router Router) *router {
+	routes := router.GetRoutes()
 	for routeType, list := range routes {
 		if r.routes[routeType] == nil {
 			r.routes[routeType] = []*Route{}
@@ -111,13 +110,13 @@ func (r *Router) useRouter(router Router) *Router {
 	return r
 }
 
-func (r *Router) getRoutes() map[string][]*Route {
+func (r *router) GetRoutes() map[string][]*Route {
 	return r.routes
 }
 
 // FindNext finds the suitable router for given url and method
 // It returns the middleware if found and a cursor index of array
-func (r *Router) FindNext(index int, method string, url string, request *request.Request) (Middleware, int, bool) {
+func (r *router) FindNext(index int, method string, url string, request *request) (Middleware, int, bool) {
 	var i = index
 	for i < len(r.routes[method]) {
 		var route = r.routes[method][i]
@@ -125,7 +124,7 @@ func (r *Router) FindNext(index int, method string, url string, request *request
 			var regex = route.regex.FindStringSubmatch(url)
 			for i, name := range route.regex.SubexpNames() {
 				if name != "" {
-					request.Params[name] = regex[i]
+					request.params.Set(name, regex[i])
 				}
 			}
 			return route.handler, i, route.isMiddleware
@@ -151,7 +150,7 @@ func CompileRegex(url string) *regexp.Regexp {
 			buffer = ""
 			i++
 		} else {
-			if url[i] == ':' && ((i-1 > 0 && url[i-1] == '/') || (i-1 == -1) || (i-1 > 0)) {
+			if url[i] == ':' && ((i-1 > 0 && url[i-1] == '/') || (i-1 == -1) || (i-1 >= 0)) {
 				// a variable found, lets read it
 				var tempbuffer = "(?P<"
 				var variableName = ""
