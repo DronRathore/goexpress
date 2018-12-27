@@ -11,38 +11,28 @@
 package goexpress
 
 import (
+	"context"
+	"fmt"
 	"log"
 	http "net/http"
-
-	request "github.com/DronRathore/goexpress/request"
-	response "github.com/DronRathore/goexpress/response"
-	router "github.com/DronRathore/goexpress/router"
+	"os"
+	"os/signal"
+	"time"
 )
 
 type express struct {
-	router     *router.Router
-	started    bool
-	properties map[string]interface{}
-}
-
-//ExpressInterface is the Public Interface to allow access to express struct's member functions
-type ExpressInterface interface {
-	Use(interface{}) *express
-	Get(string, router.Middleware) *express
-	Post(string, router.Middleware) *express
-	Put(string, router.Middleware) *express
-	Patch(string, router.Middleware) *express
-	Delete(string, router.Middleware) *express
-	SetProp(string, interface{}) *express
-	GetProp(string, interface{}) interface{}
-	Start(string) *express
+	router       *router
+	server       *http.Server
+	started      bool
+	drainTimeout time.Duration
+	drainMethod  func(ExpressInterface)
+	properties   map[string]interface{}
 }
 
 // Express returns a new instance of express
-func Express() *express {
+func Express() ExpressInterface {
 	var exp = &express{}
-	exp.router = &router.Router{}
-	exp.router.Init()
+	exp.router = newRouter()
 	exp.properties = make(map[string]interface{})
 	return exp
 }
@@ -58,25 +48,31 @@ func (e *express) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		var response = &response.Response{}
-		var request = &request.Request{}
-		request.Init(req, &e.properties)
-		response.Init(res, req, bufrw, conn, &e.properties)
+		var response = newResponse(res, req, bufrw, conn, &e.properties)
+		var request = newRequest(req, &e.properties)
 		var index = 0
 		var executedRoutes = 0
-		var next func()
-		var _next router.NextFunc
-		_next = func(n router.NextFunc) {
+		var _next NextFunc
+		// doctor the request in case of any error
+		defer func() {
+			if err := recover(); err != nil {
+				if !response.HasEnded() {
+					response.Error(500, "Internal server error")
+				}
+			}
+		}()
+
+		_next = func(n NextFunc) {
 			if response.HasEnded() == true {
 				// we are done
 				return
 			}
-			var handler, i, isMiddleware = e.router.FindNext(index, request.Method, request.URL, request)
+			var handler, i, isMiddleware = e.router.FindNext(index, request.method, request.url, request)
 			if i == -1 {
 				// done handling
 				if executedRoutes == 0 {
 					// 404
-					response.Header.SetStatus(404)
+					response.header.SetStatus(404)
 					response.Write("Not Found")
 					response.End()
 					return
@@ -92,64 +88,60 @@ func (e *express) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 					executedRoutes++
 				}
 				index = i + 1
-				handler(request, response, next)
+				handler(request, response)
 				if response.HasEnded() == false {
 					n(n)
 				}
 			}
-		}
-		next = func() {
-			_next(_next)
 		}
 		_next(_next)
 	}
 }
 
 // Extension to provide Router.Get functionalities
-func (e *express) Get(url string, middleware router.Middleware) *express {
+func (e *express) Get(url string, middleware Middleware) ExpressInterface {
 	e.router.Get(url, middleware)
 	return e
 }
 
 // Extension to provide Router.Post functionality
-func (e *express) Post(url string, middleware router.Middleware) *express {
+func (e *express) Post(url string, middleware Middleware) ExpressInterface {
 	e.router.Post(url, middleware)
 	return e
 }
 
 // Extension to provide Router.Put functionality
-func (e *express) Put(url string, middleware router.Middleware) *express {
+func (e *express) Put(url string, middleware Middleware) ExpressInterface {
 	e.router.Put(url, middleware)
 	return e
 }
 
 // Extension to provide Router.Patch functionality
-func (e *express) Patch(url string, middleware router.Middleware) *express {
+func (e *express) Patch(url string, middleware Middleware) ExpressInterface {
 	e.router.Patch(url, middleware)
 	return e
 }
 
 // Extension to provide Router.Delete functionality
-func (e *express) Delete(url string, middleware router.Middleware) *express {
+func (e *express) Delete(url string, middleware Middleware) ExpressInterface {
 	e.router.Delete(url, middleware)
 	return e
 }
 
 // Extension to provide Router.Use functionality
-func (e *express) Use(middleware interface{}) *express {
+func (e *express) Use(middleware interface{}) ExpressInterface {
 	e.router.Use(middleware)
 	return e
 }
 
-// Router returns a new instance of express Router
-func Router() *router.Router {
-	var route = &router.Router{}
-	route.Init()
+// NewRouter returns a new instance of express Router
+func NewRouter() Router {
+	var route = &router{}
 	return route
 }
 
 // Sets global app properties that can be accessed under express struct
-func (e *express) SetProp(key string, value interface{}) *express {
+func (e *express) SetProp(key string, value interface{}) ExpressInterface {
 	e.properties[key] = value
 	return e
 }
@@ -160,15 +152,61 @@ func (e *express) GetProp(key string, value interface{}) interface{} {
 }
 
 // Starts the App Server
-func (e *express) Start(port string) *express {
+func (e *express) Start(port string) ExpressInterface {
 	if e.started {
 		return e
 	}
+
+	server := &http.Server{Addr: "0.0.0.0:" + port}
+	server.Handler = e
 	log.Print("Listening at: ", port)
-	err := http.ListenAndServe("0.0.0.0:"+port, e)
-	if err != nil {
-		log.Fatal("Listen Error:", err)
-	}
+	e.server = server
 	e.started = true
+	// run a kill trap thread
+	go e.captureInterrupt()
+	err := server.ListenAndServe()
+	if err != nil {
+		log.Fatal("Server Closed Down:", err)
+	}
 	return e
+}
+
+// Shutdown tries to stop the running server after a given timeout context
+func (e *express) Shutdown(ctx context.Context) error {
+	log.Println("Stopping the server")
+	return e.server.Shutdown(ctx)
+}
+
+// ShutdownTimeout sets a timeout for draining the requests before shutting down
+func (e *express) ShutdownTimeout(t time.Duration) ExpressInterface {
+	e.drainTimeout = t
+	return e
+}
+
+// BeforeShutdown sets a method as an exit hook
+// todo: allow multiples of them
+func (e *express) BeforeShutdown(handler func(ExpressInterface)) ExpressInterface {
+	e.drainMethod = handler
+	return e
+}
+
+func (e *express) captureInterrupt() {
+	killChannel := make(chan os.Signal, 1)
+	signal.Notify(killChannel, os.Interrupt)
+	<-killChannel
+	fmt.Println("Beginning to shutdown server")
+	if e.drainMethod != nil {
+		// call the drainer method
+		e.drainMethod(e)
+	}
+
+	drainTimeout := e.drainTimeout
+	// if nothing set, set it default
+	if drainTimeout == time.Duration(0) {
+		drainTimeout = 10 * time.Second
+	}
+	// stop the server with a default delay
+	ctx, cancel := context.WithTimeout(context.Background(), drainTimeout)
+	defer cancel()
+	e.Shutdown(ctx)
 }
