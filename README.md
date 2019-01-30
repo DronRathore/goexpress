@@ -13,7 +13,7 @@ import (
 
 func main (){
   var app = express.Express()
-  app.Get("/", func(req *express.Request, res *express.Response){
+  app.Get("/", func(req express.Request, res express.Response){
     res.Write("Hello World")
     // you can skip closing connection
   })
@@ -29,7 +29,7 @@ The router works in the similar way as it does in the express-js. You can have n
 ```go
 func main (){
   var app = express.Express()
-  app.Get("/:service/:object([0-9]+)", func(req *express.Request, res *express.Response){
+  app.Get("/:service/:object([0-9]+)", func(req express.Request, res express.Response){
     res.JSON(req.Params().Get("service"))
   })
   app.Start("8080")
@@ -46,7 +46,7 @@ import (
 var LibRoutes = func (){
   // create a new Router instance which works in similar way as app.Get/Post etc
   var LibRouter = express.NewRouter()
-  LibRouter.Get("/lib/:api_version", func(req *express.Request, res *express.Response){
+  LibRouter.Get("/lib/:api_version", func(req express.Request, res express.Response){
     res.Json(req.Params.Get("api_version"))
   })
   return *LibRoutes
@@ -68,7 +68,7 @@ func main (){
   app.Use(func(req *express.Request, res *express.Response){
     req.Params.Set("I-Am-Adding-Something", "something")
   })
-  app.Get("/:service/:object([0-9]+)", func(req *express.Request, res *express.Response){
+  app.Get("/:service/:object([0-9]+)", func(req express.Request, res express.Response){
     // json will have the key added
     res.JSON(req.Params.Get("service"))
   })
@@ -101,7 +101,7 @@ import (
 )
 func main (){
   var app = express.Express()
-  app.Use(func(req *express.Request, res *express.Response){
+  app.Use(func(req express.Request, res express.Response){
     var cookie = &http.Cookie{
       Name: "name",
       Value: "value",
@@ -110,7 +110,7 @@ func main (){
     res.Cookie.Add(cookie)
     req.Params.Set("session_id", req.Cookies.Get("session_id"))
   })
-  app.Get("/", func(req *express.Request, res *express.Response){
+  app.Get("/", func(req express.Request, res express.Response){
     res.Write("Hello World")
   })
   app.Start("8080")
@@ -125,7 +125,7 @@ You can send a file by using the helper ```res.SendFile(url string, doNotSendCac
 func main (){
   var app = express.Express()
 
-  app.Get("/public/:filename", func(req *express.Request, res *express.Response){
+  app.Get("/public/:filename", func(req express.Request, res express.Response){
   res.SendFile(filename, false)
   })
   app.Start("8080")
@@ -151,7 +151,7 @@ func main (){
   app.Use(func(req *express.Request, res *express.Response){
     res.Params.Set("I-Am-Adding-Something", "something")
   })
-  app.Post("/user/new", func(req *express.Request, res *express.Response){
+  app.Post("/user/new", func(req express.Request, res express.Response){
     type User struct {
       Name string `json:"name"`
       Email string `json:"email"`
@@ -170,10 +170,10 @@ JSON Post data manipulation in golang is slightly different from JS. You have to
 ```go
 func main (){
   var app = express.Express()
-  app.Use(func(req *express.Request, res *express.Response){
+  app.Use(func(req express.Request, res express.Response){
     res.Params["I-Am-Adding-Something"] = "something"
   })
-  app.Post("/user/new", func(req *express.Request, res *express.Response){
+  app.Post("/user/new", func(req express.Request, res express.Response){
     type User struct {
       Name string `json:"name"`
       Email string `json:"email"`
