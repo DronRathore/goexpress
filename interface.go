@@ -53,6 +53,7 @@ type Response interface {
   SendFile(url string, noCache bool) bool
   WriteBytes(bytes []byte) error
   Write(content string) Response
+  Render(path string, data interface{})
 }
 
 // Header defines HTTP header interface

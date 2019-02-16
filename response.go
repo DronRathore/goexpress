@@ -307,3 +307,26 @@ func (res *response) Header() Header {
 func (res *response) Cookie() Cookie {
   return res.cookie
 }
+
+func (res *response) Render(file string, data interface{}) {
+  tmpl, err := template.ParseFiles(file)
+  if err != nil {
+    log.Print("Template not found ", err)
+    res.header.SetStatus(500)
+    res.header.FlushHeaders()
+    res.End()
+    return
+  }
+
+  var tpl bytes.Buffer
+  err = tmpl.Execute(&tpl, data)
+  if err != nil {
+    log.Print("Template render failed ", err)
+    res.header.SetStatus(500)
+    res.header.FlushHeaders()
+    res.End()
+    return
+  }
+  res.WriteBytes(tpl.Bytes())
+}
+
