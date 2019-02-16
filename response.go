@@ -3,11 +3,13 @@
 package goexpress
 
 import (
+  "bytes"
   "bufio"
   "crypto/md5"
   "encoding/hex"
   "encoding/json"
   "fmt"
+  "html/template"
   "io"
   "log"
   "net"
