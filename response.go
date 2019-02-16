@@ -308,6 +308,7 @@ func (res *response) Cookie() Cookie {
   return res.cookie
 }
 
+// Render returns rendered HTML template
 func (res *response) Render(file string, data interface{}) {
   tmpl, err := template.ParseFiles(file)
   if err != nil {
