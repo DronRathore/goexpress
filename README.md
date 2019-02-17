@@ -211,6 +211,28 @@ func(req *express.Request, res *express.Response){
 }
 ```
 
+## HTML Template
+
+Use [standard Golang http templates](https://golang.org/pkg/html/template/) to render response page.
+
+For example, you have a template file `index.html` in `templates` directory:
+
+```html
+<h1>{{.Name}}</h1>
+```
+
+Fill the context and provide a path to the template file:
+
+```go
+func(req *express.Request, res *express.Response){
+  type TmplContext struct{
+    Name string
+  }
+  data := TmplContext{"Rob"}
+  res.Render("template.html", &data)
+}
+```
+
 ## Safe Cleanup on exit
 
 Newer version of goexpress provides three new methods namely `express.ShutdownTimeout`, `express.BeforeShutdown` and `express.Shutdown`, these methods can be utilised to do cleanup before the server shuts down.
