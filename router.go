@@ -35,6 +35,7 @@ func newRouter() *router {
   r.routes["put"] = []*Route{}
   r.routes["delete"] = []*Route{}
   r.routes["patch"] = []*Route{}
+  r.routes["options"] = []*Route{}
   return r
 }
 
@@ -76,6 +77,12 @@ func (r *router) Delete(url string, middleware Middleware) Router {
   return r
 }
 
+// Options function
+func (r *router) Options(url string, middleware Middleware) Router {
+  r.addHandler("options", false, CompileRegex(url), middleware)
+  return r
+}
+
 // Use can take a function or a new express.Router() instance as argument
 func (r *router) Use(middleware interface{}) Router {
   // check if its another instance of the router
@@ -92,6 +99,7 @@ func (r *router) Use(middleware interface{}) Router {
       r.addHandler("put", true, regex, mware)
       r.addHandler("patch", true, regex, mware)
       r.addHandler("delete", true, regex, mware)
+      r.addHandler("options", true, regex, mware)
     } else {
       panic("express.Router.Use can only take a function or a Router instance")
     }

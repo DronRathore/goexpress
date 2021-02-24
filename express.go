@@ -128,6 +128,12 @@ func (e *express) Delete(url string, middleware Middleware) ExpressInterface {
   return e
 }
 
+// Extension to provide Router.Options functionality
+func (e *express) Options(url string, middleware Middleware) ExpressInterface {
+  e.router.Options(url, middleware)
+  return e
+}
+
 // Extension to provide Router.Use functionality
 func (e *express) Use(middleware interface{}) ExpressInterface {
   e.router.Use(middleware)

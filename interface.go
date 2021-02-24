@@ -82,6 +82,7 @@ type Router interface {
   Put(url string, middleware Middleware) Router
   Patch(url string, middleware Middleware) Router
   Delete(url string, middleware Middleware) Router
+  Options(url string, middleware Middleware) Router
   Use(middleware interface{}) Router
   GetRoutes() map[string][]*Route
 }
@@ -94,6 +95,7 @@ type ExpressInterface interface {
   Put(string, Middleware) ExpressInterface
   Patch(string, Middleware) ExpressInterface
   Delete(string, Middleware) ExpressInterface
+  Options(string, Middleware) ExpressInterface
   SetProp(string, interface{}) ExpressInterface
   GetProp(string, interface{}) interface{}
   Start(string) ExpressInterface
